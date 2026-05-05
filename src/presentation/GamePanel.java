@@ -2,9 +2,15 @@ package presentation;
 
 import domain.DOPOsHardestGame;
 import domain.Level;
+
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Panel principal donde se dibuja la maqueta del juego.
@@ -15,6 +21,8 @@ import java.awt.Graphics;
 public class GamePanel extends JPanel {
     private DOPOsHardestGame game;
     private final int TILE_SIZE = 25;
+    private TileManager tileManager;
+    private Map<String, BufferedImage> sprites;
     
     /**
      * Constructor que inicializa el lienzo y configura su color de fondo.
@@ -22,7 +30,20 @@ public class GamePanel extends JPanel {
      */
     public GamePanel(DOPOsHardestGame game) {
         this.game = game;
-        setBackground(new Color(180, 180, 255)); //fondo violeta claro
+        tileManager = new TileManager();
+        sprites = new HashMap<>();
+        setBackground(new Color(184, 185, 254));
+        
+        try {
+            // Mapeamos el color (identificador) de cada Elemento a su PNG
+            sprites.put("Red", ImageIO.read(new File("res/blinky.png"))); // Blinky
+            sprites.put("Blue", ImageIO.read(new File("res/enemy.png"))); // Enemigo básico
+            sprites.put("Yellow", ImageIO.read(new File("res/coin.png"))); // Moneda
+            
+            // Futura extensión: sprites.put("Pink", ImageIO.read(new File("res/inky.png")));
+        } catch (Exception e) {
+            System.out.println("Error cargando imágenes de entidades: " + e.getMessage());
+        }
     }
     /**
      * Método sobreescrito que dibuja en pantalla el mapa y las entidades del nivel.
@@ -41,66 +62,26 @@ public class GamePanel extends JPanel {
             int startX = (getWidth() - mapWidth) / 2;
             int startY = (getHeight() - mapHeight) / 2;
 
-            drawMap(g, currentLevel.getMapTemplate(), startX, startY);
+            tileManager.draw(g, currentLevel.getMapTemplate(), startX, startY, TILE_SIZE);
             
             int offset = 7; 
             int size = 25;
 
-            // Dibujar monedas
+            // dibujar monedas
             for (domain.Coin c : currentLevel.getCoins()) {
                 if (!c.isCollected()) {
-                    g.setColor(Color.YELLOW);
-                    g.fillOval(startX + (c.getX() * TILE_SIZE) + offset, startY + (c.getY() * TILE_SIZE) + offset, size, size);
-                    g.setColor(Color.BLACK);
-                    g.drawOval(startX + (c.getX() * TILE_SIZE) + offset, startY + (c.getY() * TILE_SIZE) + offset, size, size);
+                    g.drawImage(sprites.get(c.getColor()), startX + (c.getX() * TILE_SIZE), startY + (c.getY() * TILE_SIZE), TILE_SIZE, TILE_SIZE, null);
                 }
             }
 
-            // Dibujar enemigos
+            // dibujar enemigos
             for (domain.Enemy e : currentLevel.getEnemies()) {
-                g.setColor(Color.BLUE);
-                g.fillOval(startX + (e.getX() * TILE_SIZE) + offset, startY + (e.getY() * TILE_SIZE) + offset, size, size);
-                g.setColor(Color.BLACK);
-                g.drawOval(startX + (e.getX() * TILE_SIZE) + offset, startY + (e.getY() * TILE_SIZE) + offset, size, size);
+                g.drawImage(sprites.get(e.getColor()), startX + (e.getX() * TILE_SIZE), startY + (e.getY() * TILE_SIZE), TILE_SIZE, TILE_SIZE, null);
             }
 
-            // Dibujar Jugadores (Blinky)
+            //dibujar jugadores
             for (domain.Player p : currentLevel.getPlayers()) {
-                g.setColor(Color.RED);
-                g.fillRect(startX + (p.getX() * TILE_SIZE) + offset, startY + (p.getY() * TILE_SIZE) + offset, size, size);
-                g.setColor(Color.BLACK);
-                g.drawRect(startX + (p.getX() * TILE_SIZE) + offset, startY + (p.getY() * TILE_SIZE) + offset, size, size);
-            }
-        }
-    }
-    /**
-     * Renderiza la cuadrícula del mapa utilizando coordenadas dinámicas para el centrado.
-     * @param g Componente gráfico de Java.
-     * @param map Matriz de enteros con la topología del nivel.
-     * @param startX Coordenada X de origen para centrar el mapa.
-     * @param startY Coordenada Y de origen para centrar el mapa.
-     */
-    //preguntar como añadir correctamente polimorfismo
-    private void drawMap(Graphics g, int[][] map, int startX, int startY) {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[0].length; j++) {
-                int cell = map[i][j];
-                
-                // Si es pared {1}, no dibujamos nada para que se vea el fondo
-                if (cell != 1) {
-                    if (cell == 2) {
-                        g.setColor(new Color(180, 255, 180)); // Zona Segura
-                    } else {
-                        if ((i + j) % 2 == 0) {
-                            g.setColor(new Color(245, 245, 255)); // Piso claro
-                        } else {
-                            g.setColor(Color.WHITE); // Piso oscuro
-                        }
-                    }
-                    g.fillRect(startX + (j * TILE_SIZE), startY + (i * TILE_SIZE), TILE_SIZE, TILE_SIZE);
-                    g.setColor(Color.BLACK);
-                    g.drawRect(startX + (j * TILE_SIZE), startY + (i * TILE_SIZE), TILE_SIZE, TILE_SIZE);
-                }
+                g.drawImage(sprites.get(p.getColor()), startX + (p.getX() * TILE_SIZE), startY + (p.getY() * TILE_SIZE), TILE_SIZE, TILE_SIZE, null);
             }
         }
     }
