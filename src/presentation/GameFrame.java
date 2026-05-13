@@ -10,16 +10,16 @@ import java.awt.*;
  * @version 2.0
  */
 public class GameFrame extends JFrame {
-    
+	private Timer gameTimer; // Atributo de clase
 	/**
      * Constructor que ensambla la ventana principal, barras de estado y menús.
      * @param game Instancia principal que contiene la lógica y datos del juego.
      */
 	//Modificar y añadir los prepareElements
     public GameFrame(DOPOsHardestGame game) {
-        setTitle("The DOPO Hardest Game - Maqueta");
+        setTitle("The DOPO Hardest Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 500); 
+        setSize(920, 520); 
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -82,8 +82,26 @@ public class GameFrame extends JFrame {
         mainGamePanel.add(boardPanel, BorderLayout.CENTER);
         mainGamePanel.add(bottomBar, BorderLayout.SOUTH);
 
-        // Iniciar en el Menú Principal
-        MainMenuPanel startMenu = new MainMenuPanel(this, mainGamePanel);
+	    // Iniciar en el Menú Principal pasando el boardPanel como tercer argumento
+        MainMenuPanel startMenu = new MainMenuPanel(this, mainGamePanel, boardPanel);
         setContentPane(startMenu);
+        
+        // Timer
+        this.gameTimer = new Timer(1000, e -> {
+            game.decreaseTime();
+            lblTime.setText("TIEMPO: " + game.getTimeLeft());
+            
+            if (game.getTimeLeft() <= 0) {
+                game.restartLevel();
+                // Actualizamos la interfaz con los nuevos valores del reinicio
+                lblTime.setText("TIEMPO: " + game.getTimeLeft());
+                lblDeaths.setText("MUERTES: " + game.getTotalDeaths());
+                JOptionPane.showMessageDialog(this, "¡Tiempo agotado! El nivel se ha reiniciado.");
+            }
+        });
+    }
+    /** Inicia el cronómetro del juego. */
+    public void startGameTimer() {
+        if (gameTimer != null) gameTimer.start();
     }
 }

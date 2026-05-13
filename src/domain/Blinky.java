@@ -14,8 +14,8 @@ public class Blinky extends Player {
      * @param x Posición inicial en el eje X.
      * @param y Posición inicial en el eje Y.
      */
-    public Blinky(int x, int y, String color) {
-        // Velocidad 1x y color rojo por defecto según el PDF
-        super(x, y, color, 1); 
+    public Blinky(int x, int y, String color, int startX, int startY) {
+        // Velocidad 1x y color rojo por defecto según el PDF (1x = 4)
+        super(x, y, color, 4, startX, startY); 
     }
 }

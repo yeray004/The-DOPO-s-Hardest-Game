@@ -1,6 +1,10 @@
 package presentation;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics;
+// import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.io.File;
 import javax.imageio.ImageIO;
 
@@ -10,7 +14,12 @@ import javax.imageio.ImageIO;
  * @version 1.0
  */
 public class TileManager {
-    public Tile[] tiles;
+    private Tile[] tiles;
+    
+    private static String pathWall = "res/wall.png";
+    private static String pathFloorL = "res/lightFloor.png";
+    private static String pathFloorD = "res/darkFloor.png";
+    private static String pathSafe = "res/safeZone.png";
 
     /**
      * Constructor de la clase. 
@@ -28,17 +37,15 @@ public class TileManager {
     private void loadTileImages() {
         try {
         	//Pared
-            tiles[0] = new Tile();
-            tiles[0].image = ImageIO.read(new File("res/wall.png"));
-            //Piso Claro
-            tiles[1] = new Tile();
-            tiles[1].image = ImageIO.read(new File("res/lightFloor.png"));
+        	tiles[0] = new Tile(ImageIO.read(new File(pathWall)));
+        	//Piso Claro
+            tiles[1] = new Tile(ImageIO.read(new File(pathFloorL)));
             //Piso Oscuro
-            tiles[2] = new Tile();
-            tiles[2].image = ImageIO.read(new File("res/darkFloor.png"));
+            tiles[2] = new Tile(ImageIO.read(new File(pathFloorD)));
             //Zona Segura
-            tiles[3] = new Tile();
-            tiles[3].image = ImageIO.read(new File("res/safeZone.png"));
+            tiles[3] = new Tile(ImageIO.read(new File(pathSafe)));
+            //Zona Segura
+            tiles[4] = new Tile(ImageIO.read(new File(pathSafe)));
         } catch (Exception e) {
             System.out.println("Error cargando imágenes de las baldosas: " + e.getMessage());
         }
@@ -55,12 +62,27 @@ public class TileManager {
      * @param tileSize Tamaño en píxeles (ancho y alto) con el que se dibujará cada baldosa.
      */
     public void draw(Graphics g, int[][] map, int startX, int startY, int tileSize) {
+        Graphics2D g2 = (Graphics2D) g;
+        
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
                 int tileNum = map[i][j];
                 
-                if (tiles[tileNum] != null && tiles[tileNum].image != null) {
-                    g.drawImage(tiles[tileNum].image, startX + (j * tileSize), startY + (i * tileSize), tileSize, tileSize, null);
+                // Si NO es pared (0), dibujamos la baldosa y verificamos sus bordes
+                if (tileNum > 0 && tileNum < tiles.length && tiles[tileNum] != null) {
+                    int x = startX + (j * tileSize);
+                    int y = startY + (i * tileSize);
+                    
+                    g2.drawImage(tiles[tileNum].getImage(), x, y, tileSize, tileSize, null);
+
+                    // Contorno negro de 3 píxeles generado con Inteligencia artificial (Para que se vea como el original).
+                    g2.setColor(Color.BLACK);
+                    g2.setStroke(new BasicStroke(3));
+                    
+                    if (i == 0 || map[i-1][j] == 0) g2.drawLine(x, y, x + tileSize, y); // Arriba
+                    if (i == map.length - 1 || map[i+1][j] == 0) g2.drawLine(x, y + tileSize, x + tileSize, y + tileSize); // Abajo
+                    if (j == 0 || map[i][j-1] == 0) g2.drawLine(x, y, x, y + tileSize); // Izquierda
+                    if (j == map[0].length - 1 || map[i][j+1] == 0) g2.drawLine(x + tileSize, y, x + tileSize, y + tileSize); // Derecha
                 }
             }
         }

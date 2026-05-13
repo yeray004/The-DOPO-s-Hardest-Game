@@ -8,5 +8,11 @@ import java.awt.image.BufferedImage;
  * @version 1.0
  */
 public class Tile {
-    public BufferedImage image;
+    private BufferedImage image;
+    
+    public Tile(BufferedImage image) {
+        this.image = image;
+    }
+    
+    public BufferedImage getImage() { return image; }
 }

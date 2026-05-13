@@ -1,11 +1,13 @@
 package domain;
 
+import java.awt.*;
+
 /**
  * Representa una zona verde segura que puede ser inicial, intermedia o meta.
  * @author Yeray Guacheta
  * @version 1.0
  */
-public class SafeZone extends Element {
+public class SafeZone extends Element implements Collidable {
     private boolean isTarget;
 
     /**
@@ -18,12 +20,25 @@ public class SafeZone extends Element {
         super(x, y, color);
         this.isTarget = isTarget;
     }
+    
+    public void reset() {};
 
     /**
      * Verifica si esta zona segura es la meta del nivel.
      * @return true si es la zona final, false si es inicial o intermedia.
      */
-    public boolean isTarget() {
-        return isTarget;
+    public boolean isTarget() { return isTarget; }
+    
+    @Override
+    public boolean checkCollision(Collidable other) {
+    	return this.getHitbox().intersects(other.getHitbox().getBounds2D());
     }
+    
+    @Override
+    public Shape getHitbox() {
+        return new Rectangle(x * 40, y * 40, 40, 40); 
+    }
+    
+    @Override
+    public String getSpriteType() { return "SafeZone"; }
 }

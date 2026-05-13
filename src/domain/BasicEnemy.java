@@ -18,12 +18,14 @@ public class BasicEnemy extends Enemy {
      * @param speed Velocidad constante de desplazamiento.
      * @param movement Ruta lineal predefinida.
      */
-    public BasicEnemy(int x, int y, String color, int speed, List<Point> movement) {
-        super(x, y, color, speed, movement);
+    public BasicEnemy(int x, int y, String color, int speed, List<Point> movement, int dx, int dy, int startX, int startY) {
+        super(x, y, color, speed, movement, dx, dy, startX, startY);
     }
 
+    // Lógica para iterar sobre la lista movement rebotando en las paredes
     @Override
     public void updatePosition() {
-        // Lógica para iterar sobre la lista movement rebotando en las paredes
+    	x += dx * speed;
+        y += dy * speed;
     }
 }

@@ -28,27 +28,40 @@ public class LevelLoader {
             int height = Integer.parseInt(dimensions[1]);
 
             int[][] mapTemplate = new int[height][width];
+            
+            Level nuevoNivel = new Level(width, height, mapTemplate);
 
             // Leer las siguientes líneas para llenar la matriz
             for (int i = 0; i < height; i++) {
                 String[] row = br.readLine().split(" ");
                 for (int j = 0; j < width; j++) {
-                    mapTemplate[i][j] = Integer.parseInt(row[j]);
+                    int val = Integer.parseInt(row[j]);
+                    mapTemplate[i][j] = val;
+                    
+                    // Instanciar paredes como objetos físicos
+                    if (val == 0) {
+                        nuevoNivel.getWalls().add(new Wall(j, i, "Black"));
+                    } else if (val == 3) {
+                        // Zona segura normal o de inicio
+                        nuevoNivel.getSafeZones().add(new SafeZone(j, i, "Green", false));
+                    } else if (val == 4) {
+                        // Zona segura designada como META
+                        nuevoNivel.getSafeZones().add(new SafeZone(j, i, "Green", true));
+                    }
                 }
             }
-            
-            Level nuevoNivel = new Level(width, height, mapTemplate);
 	
 	         // Blinky en la zona segura X: 2, Y: 4
-	         nuevoNivel.getPlayers().add(new Blinky(2, 4, "Red"));
+             nuevoNivel.getPlayers().add(new Blinky(2 * 40, 4 * 40, "Red", 2 * 40, 4 * 40));
 	
 	         // Moneda en el centro del corredor X: 10, Y: 4
-	         nuevoNivel.getCoins().add(new Coin(10, 4, "Yellow"));
+             nuevoNivel.getCoins().add(new Coin(10 * 40, 4 * 40, "Yellow"));
 	
-	         // Tres enemigos azules de prueba en el corredor central
-	         nuevoNivel.getEnemies().add(new BasicEnemy(6, 3, "Blue", 1, null));
-	         nuevoNivel.getEnemies().add(new BasicEnemy(8, 5, "Blue", 1, null));
-	         nuevoNivel.getEnemies().add(new BasicEnemy(10, 2, "Blue", 1, null));
+	         // Dos enemigos azules de prueba en el corredor central
+             // Enemigo horizontal
+             nuevoNivel.getEnemies().add(new BasicEnemy(6 * 40, 3 * 40, "Blue", 2, null, 1, 0, 6 * 40, 3 * 40));
+             // Enemigo vertical
+             nuevoNivel.getEnemies().add(new BasicEnemy(8 * 40, 5 * 40, "Blue", 2, null, 0, 1, 6 * 40, 3 * 40));
 	
 	         return nuevoNivel;
 

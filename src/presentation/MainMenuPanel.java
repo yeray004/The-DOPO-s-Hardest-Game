@@ -14,7 +14,7 @@ public class MainMenuPanel extends JPanel {
      * @param frame Ventana principal para gestionar el cambio de vista.
      * @param gamePanel Panel del juego al que se transicionará al presionar el botón.
      */
-    public MainMenuPanel(JFrame frame, JPanel gamePanel) {
+    public MainMenuPanel(JFrame frame, JPanel gamePanel, GamePanel boardPanel) {
         setBackground(new Color(180, 180, 255)); 
         setLayout(new GridBagLayout()); 
 
@@ -25,6 +25,10 @@ public class MainMenuPanel extends JPanel {
         btnPlay.addActionListener(e -> {
             frame.setContentPane(gamePanel);
             frame.revalidate();
+            boardPanel.requestFocusInWindow();
+            
+            // Iniciamos el tiempo cuando se entra al nivel
+            ((GameFrame)frame).startGameTimer();
         });
 
         add(btnPlay);

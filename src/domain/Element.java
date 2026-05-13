@@ -6,7 +6,7 @@ package domain;
  * @author Yeray Guacheta
  * @version 1.0
  */
-public abstract class Element implements Collidable {
+public abstract class Element{
     protected int x;
     protected int y;
     protected String color;
@@ -22,37 +22,26 @@ public abstract class Element implements Collidable {
         this.y = y;
         this.color = color;
     }
-    /**
-     * Engrega la coordenada x del objeto.
-     * @return Posición en coordenada x.
-     */
-    public int getX() {
-        return x;
-    }
-    /**
-     * Engrega la coordenada y del objeto.
-     * @return Posición en coordenada y.
-     */
-    public int getY() {
-        return y;
-    }
-    /**
-     * Engrega el color del objeto.
-     * @return Color del objeto.
-     */
-    public String getColor() {
-        return color;
-    }
-    /**
-     * Verifica por defecto si este elemento comparte la misma coordenada exacta que otro.
-     * Puede ser sobreescrito si un elemento necesita una colisión distinta.
-     */
-    @Override
-    public boolean checkCollision(Element other) {
-        boolean res = false;
-    	if(x==other.getX() && y==other.getY()) {
-        	res = true;
-        }
-        return res;
-    }
+    
+    /** Devuelve el elemento a su estado y posición original. */
+    public abstract void reset();
+    
+    /** Establrece si un elemento es o no visible. */
+    public boolean isVisible() { return true; }
+    
+    /**Engrega la coordenada x del objeto.
+     * @return Posición en coordenada x.*/
+    public int getX() { return x; }
+    
+    /**Engrega la coordenada y del objeto.
+     * @return Posición en coordenada y.*/
+    public int getY() { return y; }
+    
+    /**Engrega el color del objeto.
+     * @return Color del objeto.*/
+    public String getColor() { return color; }
+    
+    /**Entrega el tipo de elemento.
+     * @return Tipo de identidad*/
+    public abstract String getSpriteType();
 }
