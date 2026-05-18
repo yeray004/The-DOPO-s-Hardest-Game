@@ -18,9 +18,10 @@ import java.util.*;
  */
 public class GamePanel extends JPanel implements Runnable {
     private DOPOsHardestGame game;
+    private boolean isPaused = true;
     private final int TILE_SIZE = 40;
-    private final int SPRITE_SIZE = 25; // tamaño visual de los personajes y objetos
-    private final int OFFSET = (TILE_SIZE - SPRITE_SIZE) / 2; // Margen para centrar
+    //private final int SPRITE_SIZE = 25; // tamaño visual de los personajes y objetos
+    //private final int OFFSET = (TILE_SIZE - SPRITE_SIZE) / 2; // Margen para centrar
     private TileManager tileManager;
     private Map<String, BufferedImage> sprites;
     // Atributos de movimiento
@@ -28,6 +29,7 @@ public class GamePanel extends JPanel implements Runnable {
     private final int FPS = 60;
     // Interruptores de dirección
     private boolean up, down, left, right;
+    private boolean up2, down2, left2, right2;
     
     private static String pathPlayer = "res/blinky.png";
     private static String pathEnemy = "res/enemy.png";
@@ -61,18 +63,32 @@ public class GamePanel extends JPanel implements Runnable {
         addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
+            	// Controles Jugador 1 (Flechas)
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) up = true;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) down = true;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) left = true;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) right = true;
+                
+                // Controles Jugador 2 (WASD)
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_W) up2 = true;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_S) down2 = true;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_A) left2 = true;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_D) right2 = true;
             }
 
             @Override
             public void keyReleased(java.awt.event.KeyEvent e) {
+            	// Controles Jugador 1 (Flechas)
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) up = false;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) down = false;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) left = false;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) right = false;
+                
+                // Controles Jugador 2 (WASD)
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_W) up2 = false;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_S) down2 = false;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_A) left2 = false;
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_D) right2 = false;
             }
         });
         startGameThread();
@@ -103,24 +119,51 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
+    /**Calcula de forma independiente las intenciones de movimiento de ambos jugadores y actualiza el dominio.*/
     private void update() {
-        int dx = 0, dy = 0;
-        if (up) dy = -1;
-        if (down) dy = 1;
-        if (left) dx = -1;
-        if (right) dx = 1;
+        if (isPaused) return;
 
-        if (dx != 0 || dy != 0) {
-            game.handlePlayerMovement(dx, dy);
+        // Procesar Jugador 1 (Índice 0)
+        int dx1 = 0, dy1 = 0;
+        if (up) dy1 = -1;
+        if (down) dy1 = 1;
+        if (left) dx1 = -1;
+        if (right) dx1 = 1;
+        if (dx1 != 0 || dy1 != 0) {
+            game.handlePlayerMovement(0, dx1, dy1);
         }
+
+        // Procesar Jugador 2 (Índice 1)
+        int dx2 = 0, dy2 = 0;
+        if (up2) dy2 = -1;
+        if (down2) dy2 = 1;
+        if (left2) dx2 = -1;
+        if (right2) dx2 = 1;
+        if (dx2 != 0 || dy2 != 0) {
+            game.handlePlayerMovement(1, dx2, dy2);
+        }
+
         game.update();
+        
+        GameFrame parentFrame = (GameFrame) SwingUtilities.getWindowAncestor(this);
+        if (parentFrame != null) {
+            parentFrame.refreshCounters();
+        }
     }
     
     private void loadSprites() {
         try {
-            sprites.put("Player", ImageIO.read(new File(pathPlayer)));
-            sprites.put("Enemy", ImageIO.read(new File(pathEnemy)));
-            sprites.put("Coin", ImageIO.read(new File(pathCoin)));
+        	sprites.put("Blinky", ImageIO.read(new File("res/blinky.png")));
+            sprites.put("Inky", ImageIO.read(new File("res/inky.png")));
+            sprites.put("Clyde", ImageIO.read(new File("res/clyde.png")));
+            sprites.put("ClydeDamaged", ImageIO.read(new File("res/clyde_damaged.png")));
+            sprites.put("BasicEnemy", ImageIO.read(new File("res/enemy.png")));
+            sprites.put("Yellow", ImageIO.read(new File("res/coin.png")));
+            
+            // --- Mapeos temporales para que dibujen el mismo sprite azul ---
+            sprites.put("Orange", ImageIO.read(new File("res/enemy.png")));
+            sprites.put("Pink", ImageIO.read(new File("res/enemy.png")));
+            sprites.put("Red", ImageIO.read(new File("res/enemy.png")));
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error cargando sprites de entidades.");
         }
@@ -134,7 +177,7 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        int[][] map = game.getMapData(); // Fachada
+        int[][] map = game.getMapData(); 
         if (map == null) return;
         
         int mapW = map[0].length * TILE_SIZE;
@@ -144,17 +187,34 @@ public class GamePanel extends JPanel implements Runnable {
 
         tileManager.draw(g, map, startX, startY, TILE_SIZE);
 
-        // Uso de polimorfismo: el objeto dice qué sprite necesita
         for (RenderData entity : game.getEntitiesToDraw()) {
             BufferedImage img = sprites.get(entity.type);
             if (img != null) {
+                // Dibujado dinámico: Usa exactamente las medidas proporcionadas por el dominio
                 g.drawImage(img, 
-                    startX + entity.x + OFFSET, // x es píxel, solo sumamos el inicio del mapa
-                    startY + entity.y + OFFSET, // y es píxel
-                    SPRITE_SIZE, SPRITE_SIZE, null);
+                    startX + entity.x, 
+                    startY + entity.y, 
+                    entity.width, 
+                    entity.height, 
+                    null);
             }
-            //g.setColor(Color.GREEN);
-            //g.drawRect(startX + entity.x + OFFSET + 3, startY + entity.y + OFFSET + 3, SPRITE_SIZE - 6, SPRITE_SIZE - );
         }
+    }
+    
+    //PAUSA
+    /**Alterna el estado de pausa del juego.*/
+    public void togglePause() {
+        isPaused = !isPaused;
+    }
+
+    /**Retorna si el juego se encuentra pausado.
+     * @return true si está en pausa.*/
+    public boolean isPaused() {
+        return isPaused;
+    }
+    
+    /**Reanuda las mecánicas y físicas del juego.*/
+    public void resumeGame() {
+        isPaused = false;
     }
 }

@@ -7,16 +7,20 @@ import java.awt.*;
 /**
  * Ventana principal que gestiona el intercambio entre el menú y el juego.
  * @author Yeray Guacheta
- * @version 2.0
+ * @version 2.2
  */
 public class GameFrame extends JFrame {
-	private Timer gameTimer; // Atributo de clase
+	private DOPOsHardestGame game;
+	private JLabel lblCoins;
+	private JLabel lblDeaths;
+	private Timer gameTimer;
 	/**
      * Constructor que ensambla la ventana principal, barras de estado y menús.
      * @param game Instancia principal que contiene la lógica y datos del juego.
      */
 	//Modificar y añadir los prepareElements
     public GameFrame(DOPOsHardestGame game) {
+    	this.game = game;
         setTitle("The DOPO Hardest Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(920, 520); 
@@ -37,6 +41,8 @@ public class GameFrame extends JFrame {
         btnMenu.setBackground(Color.BLACK);
         btnMenu.setForeground(Color.WHITE);
         btnMenu.setFocusable(false);
+        btnMenu.setFocusPainted(false);
+        btnMenu.setBorderPainted(false);
 
         JPopupMenu menuPopup = new JPopupMenu();
         menuPopup.add(new JMenuItem("Guardar Partida"));
@@ -48,7 +54,7 @@ public class GameFrame extends JFrame {
         JLabel lblTime = new JLabel("TIEMPO: " + game.getTimeLeft(), SwingConstants.CENTER);
         lblTime.setForeground(Color.WHITE);
 
-        JLabel lblDeaths = new JLabel("MUERTES: " + game.getTotalDeaths() + "   ", SwingConstants.RIGHT);
+        lblDeaths = new JLabel("MUERTES: " + game.getTotalDeaths() + "   ", SwingConstants.RIGHT);
         lblDeaths.setForeground(Color.WHITE);
 
         topBar.add(leftButtons, BorderLayout.WEST);
@@ -67,8 +73,16 @@ public class GameFrame extends JFrame {
         btnPause.setBackground(Color.BLACK);
         btnPause.setForeground(Color.WHITE);
         btnPause.setFocusable(false);
+        btnPause.setFocusPainted(false);
+        btnPause.setBorderPainted(false);
         
         bottomLeftPanel.add(btnPause);
+        
+        //Etiqueta de moneda
+        
+        lblCoins = new JLabel("MONEDAS: 0", SwingConstants.CENTER);
+        lblCoins.setForeground(Color.WHITE);
+        bottomBar.add(lblCoins, BorderLayout.CENTER);
         
         JLabel lblRightBottom = new JLabel("DOPO 2026-1   ", SwingConstants.RIGHT);
         lblRightBottom.setForeground(Color.WHITE);
@@ -83,7 +97,7 @@ public class GameFrame extends JFrame {
         mainGamePanel.add(bottomBar, BorderLayout.SOUTH);
 
 	    // Iniciar en el Menú Principal pasando el boardPanel como tercer argumento
-        MainMenuPanel startMenu = new MainMenuPanel(this, mainGamePanel, boardPanel);
+        MainMenuPanel startMenu = new MainMenuPanel(this, mainGamePanel, game);
         setContentPane(startMenu);
         
         // Timer
@@ -95,13 +109,34 @@ public class GameFrame extends JFrame {
                 game.restartLevel();
                 // Actualizamos la interfaz con los nuevos valores del reinicio
                 lblTime.setText("TIEMPO: " + game.getTimeLeft());
-                lblDeaths.setText("MUERTES: " + game.getTotalDeaths());
+                lblDeaths.setText("MUERTES " + game.getTotalDeaths());
                 JOptionPane.showMessageDialog(this, "¡Tiempo agotado! El nivel se ha reiniciado.");
+            }
+        });
+        
+        //PAUSE
+        btnPause.addActionListener(e -> {
+            boardPanel.togglePause();
+            if (boardPanel.isPaused()) {
+                gameTimer.stop(); // Detiene el contador de tiempo
+                btnPause.setText("REANUDAR");
+            } else {
+                gameTimer.start(); // Reanuda el contador de tiempo
+                btnPause.setText("PAUSA");
             }
         });
     }
     /** Inicia el cronómetro del juego. */
     public void startGameTimer() {
         if (gameTimer != null) gameTimer.start();
+    }
+    /**Sincroniza los contadores de la interfaz visual con los datos del dominio.*/
+    public void refreshCounters() {
+    	lblDeaths.setText("MUERTES: " + game.getTotalDeaths() + "   ");
+        if (game.getCurrentLevel() != null && !game.getCurrentLevel().getPlayers().isEmpty()) {
+            int coins = game.getCurrentLevel().getPlayers().get(0).getCollectedCoins();
+            int totalCoins = game.getCurrentLevel().getCoins().size();
+            lblCoins.setText("MONEDAS: " + coins + "/" + totalCoins);
+        }
     }
 }

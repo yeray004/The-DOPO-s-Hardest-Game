@@ -51,8 +51,8 @@ public class Level {
      * @param p Jugador que se desea mover.
      * @param dx Dirección en el eje X (-1, 0, 1).
      * @param dy Dirección en el eje Y (-1, 0, 1).
-     */
-    public void attemptPlayerMove(Player p, int dx, int dy) {
+     * @return true si el jugador murió durante el movimiento.*/
+    public boolean attemptPlayerMove(Player p, int dx, int dy) {
     	Rectangle nextHitbox = p.getNextHitbox(dx, dy);
         boolean canMove = true;
         
@@ -65,13 +65,18 @@ public class Level {
         
         if (canMove) {
             p.move(dx, dy);
-            checkInteractions(p);
+            return checkInteractions(p);
         }
+        return false;
     }
-    
+
     // ENEMIGOS
-    /** Actualiza la posición de todos los enemigos y gestiona colisiones con el jugador. */
+    /** Actualiza la posición de todos los enemigos y gestiona colisiones con cualquiera de los jugadores activos.
+     * @return true si algún jugador sufrió una muerte definitiva.*/
     public boolean updateEnemies() {
+        boolean collisionOccurred = false;
+        boolean anyPlayerDied = false;
+
         for (Enemy e : enemies) {
             boolean hitWall = false;
             for (Wall w : walls) {
@@ -80,20 +85,29 @@ public class Level {
                     break;
                 }
             }
-            
             if (hitWall) {
                 e.reverseDirection();
             } else {
-                e.updatePosition();
+                Player target = players.isEmpty() ? null : players.get(0);
+                e.updatePosition(target);
             }
             
-            if (!players.isEmpty() && e.checkCollision(players.get(0))) {
-                players.get(0).die();
-                resetLevel(); 
-                return true; // Notifica la muerte a la fachada
+            // Evalúa el impacto con cada jugador
+            for (Player p : players) {
+                if (e.checkCollision(p)) {
+                    collisionOccurred = true;
+                    if (p.hitByEnemy()) { 
+                        anyPlayerDied = true; // Muerte confirmada por el estado
+                    }
+                }
             }
         }
-        return false;
+        
+        // Si hubo contacto (mortal o escudo), se reubican las entidades para evitar multi-golpes
+        if (collisionOccurred) {
+            resetLevel();
+        }
+        return anyPlayerDied;
     }
     
     /**
@@ -109,15 +123,15 @@ public class Level {
         return false;
     }
     
-    //INTERACCIONES EN EL NIVEL
-    
-    /**Coordina las validaciones de recolección de monedas, muerte y victoria.
+    //------------- INTERACCIONES EN EL NIVEL -------------
+    /**Coordina las validaciones de recolección de monedas, muerte y victoria para un jugador específico.
      * @param p Jugador actual para evaluar interacciones.
-     */
-    private void checkInteractions(Player p) {
-    	handleCoinCollection(p);
-        handleEnemyCollision(p);
+     * @return true si el jugador murió por impacto.*/
+    private boolean checkInteractions(Player p) {
+        handleCoinCollection(p);
+        boolean died = handleEnemyCollision(p);
         if (isCompleted(p)) announceWinner(p);
+        return died;
     }
 
     /**Gestiona la recolección de monedas si el jugador entra en contacto con ellas.
@@ -125,23 +139,29 @@ public class Level {
      */
     private void handleCoinCollection(Player p) {
         for (Coin c : coins) {
-            if (p.checkCollision(c)) {
+            if (!c.isCollected() && p.checkCollision(c)) {
                 c.collect();
                 p.collectCoin();
+                
+                // Asignación de Skin (Estado) según el color de la moneda
+                switch (c.getColor()) {
+                    case "Blue": p.changeState(new InkyState()); break;
+                    case "Green": p.changeState(new ClydeState()); break;
+                    default: break; // Moneda "Yellow" normal
+                }
             }
         }
     }
 
-    /**Verifica si el jugador colisionó con algún enemigo para reiniciar el nivel.
+    /**Verifica si un jugador específico colisionó con algún enemigo para procesar el daño.
      * @param p Jugador a evaluar.
-     * @return true si ocurrió una colisión mortal, false de lo contrario.
-     */
+     * @return true si ocurrió una colisión mortal, false si se absorbió o no hubo contacto.*/
     private boolean handleEnemyCollision(Player p) {
         for (Enemy e : enemies) {
             if (p.checkCollision(e)) {
-                p.die();
-                resetLevel(); 
-                return true;
+                boolean lethal = p.hitByEnemy();
+                resetLevel(); // Separa los objetos inmediatamente
+                return lethal;
             }
         }
         return false;

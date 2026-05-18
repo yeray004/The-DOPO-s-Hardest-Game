@@ -1,6 +1,8 @@
 package domain;
 
 import persistence.LevelLoader;
+
+import java.awt.Rectangle;
 import java.util.*;
 
 /**
@@ -15,6 +17,8 @@ public class DOPOsHardestGame {
     private int totalDeaths;
     private int timeLeft;
     private List<Level> levels;
+    
+    private String gameMode = "Single";
 
     /**
      * Constructor que inicializa el juego cargando los niveles desde sus rutas.
@@ -35,6 +39,55 @@ public class DOPOsHardestGame {
             }
         }
         
+    }
+    
+    //------------- MODO DE JUEGO -------------
+    /**Configura la modalidad de juego actual y prepara los personajes requeridos.
+     * @param mode Nombre del modo de juego ("Single" o "PvP").*/
+    public void setGameMode(String mode) {
+        this.gameMode = mode;
+        setupPlayersForMode();
+    }
+
+    /**Prepara e instancia los jugadores necesarios en el nivel activo según el modo.*/
+    public void setupPlayersForMode() {
+        Level current = getCurrentLevel();
+        if (current != null) {
+            current.getPlayers().clear();
+            // Instancia al Jugador 1 base (Siempre presente)
+            current.getPlayers().add(new Player(2 * 40, 4 * 40));
+            // Si el modo requiere PvP, añade al segundo jugador polimórficamente
+            if ("PvP".equals(gameMode)) {
+                current.getPlayers().add(new Player(3 * 40, 4 * 40));
+            }
+            current.resetLevel();
+        }
+    }
+    
+    //------------- SKINS DE JUGADOR -------------
+    /**Asigna las skins iniciales a los jugadores antes de empezar el nivel.
+     * @param skinP1 Nombre de la skin del Jugador 1.
+     * @param skinP2 Nombre de la skin del Jugador 2 (puede ser null en modo Single).*/
+    public void setInitialSkins(String skinP1, String skinP2) {
+        Level current = getCurrentLevel();
+        if (current == null || current.getPlayers().isEmpty()) return;
+
+        // Jugador 1
+        applySkin(current.getPlayers().get(0), skinP1);
+
+        // Jugador 2 (Si existe en PvP)
+        if (current.getPlayers().size() > 1 && skinP2 != null) {
+            applySkin(current.getPlayers().get(1), skinP2);
+        }
+    }
+
+    /**Aplica el estado (Skin) polimórfico al jugador.
+     * @param p Jugador a modificar.
+     * @param skin Nombre de la skin.*/
+    private void applySkin(Player p, String skin) {
+        if (skin != null) {
+            p.setInitialSkin(skin);
+        }
     }
     
     /** Actualiza el juego mientras está en marcha. */
@@ -84,12 +137,16 @@ public class DOPOsHardestGame {
         }
     }
     
-    
-    public void handlePlayerMovement(int dx, int dy) {
+    /**Mueve a un jugador específico por su índice e incrementa las muertes si colisiona con un enemigo.
+     * @param playerIndex Índice del jugador en la lista.
+     * @param dx Dirección en el eje X (-1, 0, 1).
+     * @param dy Dirección en el eje Y (-1, 0, 1).*/
+    public void handlePlayerMovement(int playerIndex, int dx, int dy) {
         Level current = getCurrentLevel();
-        if (current != null && !current.getPlayers().isEmpty()) {
-            Player p = current.getPlayers().get(0);
-            current.attemptPlayerMove(p, dx, dy);
+        if (current != null && current.getPlayers().size() > playerIndex) {
+            if (current.attemptPlayerMove(current.getPlayers().get(playerIndex), dx, dy)) {
+                totalDeaths++;
+            }
         }
     }
 
@@ -114,7 +171,7 @@ public class DOPOsHardestGame {
      */
     public int getTimeLeft() { return timeLeft; }
     
-    // --- Métodos de Fachada para la Presentación
+    // ------------- Métodos de Fachada para la Presentación -------------
     /**
      * Retorna la matriz que define la estructura física del mapa actual.
      * @return Matriz de enteros o null si no hay nivel cargado.
@@ -123,16 +180,16 @@ public class DOPOsHardestGame {
         return (getCurrentLevel() != null) ? getCurrentLevel().getMapTemplate() : null;
     }
     
-    /**
-     * Entrega una lista de objetos de datos simples para ser dibujados.
-     * Esto evita que la presentación conozca las clases 'Element', 'Player', etc.
-     * @return data Lista de elementos para ser dibujados por la vista.
+    /**Entrega una lista de objetos de datos simples para ser dibujados.
+     * @return Lista de elementos para renderizar con sus dimensiones exactas.
      */
     public List<RenderData> getEntitiesToDraw() {
         List<RenderData> data = new ArrayList<>();
         for (Element e : getCurrentLevel().getAllElements()) {
-        	if (e.isVisible()) {
-                data.add(new RenderData(e.getX(), e.getY(), e.getSpriteType()));
+            if (e.isVisible() && e instanceof Collidable) {
+                // Se extrae la "caja" exacta que ocupa el elemento con su margen
+                Rectangle bounds = ((Collidable) e).getHitbox().getBounds();
+                data.add(new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, e.getSpriteType()));
             }
         }
         return data;
