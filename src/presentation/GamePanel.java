@@ -14,11 +14,12 @@ import java.util.*;
  * Panel principal donde se dibuja la maqueta del juego.
  * 
  * @author Yeray Guacheta
- * @version 1.0
+ * @version 1.2
  */
 public class GamePanel extends JPanel implements Runnable {
     private DOPOsHardestGame game;
     private boolean isPaused = true;
+    private boolean victoryDialogVisible = false;
     private final int TILE_SIZE = 40;
     //private final int SPRITE_SIZE = 25; // tamaño visual de los personajes y objetos
     //private final int OFFSET = (TILE_SIZE - SPRITE_SIZE) / 2; // Margen para centrar
@@ -31,9 +32,6 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean up, down, left, right;
     private boolean up2, down2, left2, right2;
     
-    private static String pathPlayer = "res/blinky.png";
-    private static String pathEnemy = "res/enemy.png";
-    private static String pathCoin = "res/coin.png";
     
     /**
      * Constructor que inicializa el lienzo y configura su color de fondo.
@@ -44,16 +42,6 @@ public class GamePanel extends JPanel implements Runnable {
         tileManager = new TileManager();
         sprites = new HashMap<>();
         setBackground(new Color(184, 185, 254));
-        
-        try {
-            // Mapeamos el color (identificador) de cada Elemento a su PNG
-        	sprites.put("Player", ImageIO.read(new File(pathPlayer)));
-            sprites.put("Enemy", ImageIO.read(new File(pathEnemy)));
-            sprites.put("Coin", ImageIO.read(new File(pathCoin)));
-            
-        } catch (Exception e) {
-            System.out.println("Error cargando imágenes de entidades: " + e.getMessage());
-        }
         
         //Key listener
         requestFocusInWindow();
@@ -148,6 +136,14 @@ public class GamePanel extends JPanel implements Runnable {
         GameFrame parentFrame = (GameFrame) SwingUtilities.getWindowAncestor(this);
         if (parentFrame != null) {
             parentFrame.refreshCounters();
+            if (game.hasPendingVictory() && !victoryDialogVisible) {
+                victoryDialogVisible = true;
+                isPaused = true;
+                SwingUtilities.invokeLater(() -> {
+                    parentFrame.handleVictory();
+                    victoryDialogVisible = false;
+                });
+            }
         }
     }
     
@@ -157,13 +153,16 @@ public class GamePanel extends JPanel implements Runnable {
             sprites.put("Inky", ImageIO.read(new File("res/inky.png")));
             sprites.put("Clyde", ImageIO.read(new File("res/clyde.png")));
             sprites.put("ClydeDamaged", ImageIO.read(new File("res/clyde_damaged.png")));
-            sprites.put("BasicEnemy", ImageIO.read(new File("res/enemy.png")));
+            sprites.put("LinearEnemy", ImageIO.read(new File("res/linear_enemy.png")));
+            sprites.put("PatrolEnemy", ImageIO.read(new File("res/patrol_enemy.png")));
+            sprites.put("SearchEnemy", ImageIO.read(new File("res/search_enemy.png")));
+            sprites.put("AmbushEnemy", ImageIO.read(new File("res/ambush_enemy.png")));
             sprites.put("Yellow", ImageIO.read(new File("res/coin.png")));
-            
-            // --- Mapeos temporales para que dibujen el mismo sprite azul ---
-            sprites.put("Orange", ImageIO.read(new File("res/enemy.png")));
-            sprites.put("Pink", ImageIO.read(new File("res/enemy.png")));
-            sprites.put("Red", ImageIO.read(new File("res/enemy.png")));
+            sprites.put("RedCoin", ImageIO.read(new File("res/red_coin.png")));
+            sprites.put("BlueCoin", ImageIO.read(new File("res/blue_coin.png")));
+            sprites.put("GreenCoin", ImageIO.read(new File("res/green_coin.png")));
+            sprites.put("LifeSource", ImageIO.read(new File("res/life_source.png")));
+            sprites.put("Bomb", ImageIO.read(new File("res/bomb.png")));
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error cargando sprites de entidades.");
         }
@@ -191,16 +190,47 @@ public class GamePanel extends JPanel implements Runnable {
             BufferedImage img = sprites.get(entity.type);
             if (img != null) {
                 // Dibujado dinámico: Usa exactamente las medidas proporcionadas por el dominio
+                int drawX = startX + entity.x;
+                int drawY = startY + entity.y;
                 g.drawImage(img, 
-                    startX + entity.x, 
-                    startY + entity.y, 
+                    drawX, 
+                    drawY, 
                     entity.width, 
                     entity.height, 
                     null);
+                drawBorderIfNeeded(g, entity, drawX, drawY);
             }
         }
     }
-    
+
+    /**Dibuja el borde elegido para jugadores sin mezclar esta decision con el dominio.
+     * @param g Componente grafico usado para dibujar.
+     * @param entity Datos del elemento renderizado.
+     * @param drawX Posicion X final en pantalla.
+     * @param drawY Posicion Y final en pantalla.*/
+    private void drawBorderIfNeeded(Graphics g, RenderData entity, int drawX, int drawY) {
+        if (entity.borderType == null) return;
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setColor(getBorderColor(entity.borderType));
+        g2.setStroke(new BasicStroke(3));
+        // El borde se alinea con el sprite visual para evitar desfases en pantalla.
+        g2.drawRect(drawX, drawY, entity.width - 1, entity.height - 1);
+    }
+
+    /**Convierte el nombre del borde seleccionado en un color de presentacion.
+     * @param borderType Nombre elegido por el usuario.
+     * @return Color usado para dibujar el borde.*/
+    private Color getBorderColor(String borderType) {
+        switch (borderType) {
+            case "White": return Color.WHITE;
+            case "Yellow": return Color.YELLOW;
+            case "Orange": return Color.ORANGE;
+            case "Cyan": return Color.CYAN;
+            case "Magenta": return Color.MAGENTA;
+            default: return Color.BLACK;
+        }
+    }
+
     //PAUSA
     /**Alterna el estado de pausa del juego.*/
     public void togglePause() {
@@ -213,8 +243,21 @@ public class GamePanel extends JPanel implements Runnable {
         return isPaused;
     }
     
+    /**Limpia las teclas activas para evitar movimientos heredados entre niveles.*/
+    public void clearMovementState() {
+        up = false;
+        down = false;
+        left = false;
+        right = false;
+        up2 = false;
+        down2 = false;
+        left2 = false;
+        right2 = false;
+    }
+
     /**Reanuda las mecánicas y físicas del juego.*/
     public void resumeGame() {
+        clearMovementState();
         isPaused = false;
     }
 }

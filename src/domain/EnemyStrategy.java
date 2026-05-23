@@ -4,10 +4,10 @@ package domain;
  * Interfaz para el patrón Strategy que define el comportamiento del enemigo.
  */
 public interface EnemyStrategy {
-	/**Actualiza la posición del enemigo.
-     * @param enemy Referencia al enemigo a actualizar.
+	/**Actualiza la posición del elemento móvil.
+     * @param element Referencia al elemento que se va a actualizar.
      * @param target Jugador objetivo para estrategias de persecución (puede ser null).*/
-    void updatePosition(Enemy enemy, Player target);
+    void updatePosition(MovableElement element, Player target);
     
     /**Retorna el tipo de sprite asociado a este enemigo.
      * @return Nombre del sprite.*/

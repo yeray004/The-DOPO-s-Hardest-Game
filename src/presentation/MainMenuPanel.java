@@ -7,7 +7,7 @@ import java.awt.*;
 /**
  * Menú inicial de la aplicación.
  * @author Yeray Guacheta
- * @version 2.0
+ * @version 2.1
  */
 public class MainMenuPanel extends JPanel {
     /**
@@ -28,35 +28,56 @@ public class MainMenuPanel extends JPanel {
         lblTitle.setFont(new Font("Impact", Font.PLAIN, 48));
         lblTitle.setForeground(Color.BLACK);
         gbc.gridy = 0;
-        gbc.insets = new Insets(10, 10, 40, 10); // Más espacio debajo del título
+        gbc.insets = new Insets(10, 10, 30, 10); // Más espacio debajo del título
         add(lblTitle, gbc);
+
+        // Selector de configuracion antes de escoger el modo de juego
+        JLabel lblLevel = new JLabel("CONFIGURACIÓN:", SwingConstants.CENTER);
+        lblLevel.setFont(new Font("Impact", Font.PLAIN, 22));
+        gbc.gridy = 1;
+        gbc.insets = new Insets(10, 10, 5, 10);
+        add(lblLevel, gbc);
+
+        String[] levelNames = game.getLevelNames();
+        JComboBox<String> levelCombo = new JComboBox<>(levelNames);
+        levelCombo.setPreferredSize(new Dimension(300, 35));
+        if (levelNames.length > 0) {
+            levelCombo.setSelectedIndex(Math.max(0, game.getCurrentLevelIndex()));
+        }
+        gbc.gridy = 2;
+        add(levelCombo, gbc);
 
         // Botón para modo clásico
         JButton btnSingle = createFlatButton("MODO INDIVIDUAL");
         btnSingle.addActionListener(e -> {
+            game.selectLevel(levelCombo.getSelectedIndex());
             game.setGameMode("Single");
             // Transición a Selección de Personaje (PvP = false)
             frame.setContentPane(new CharacterSelectionPanel(frame, gamePanel, game, false));
             frame.revalidate();
         });
-        gbc.gridy = 1;
+        btnSingle.setEnabled(levelNames.length > 0);
+        gbc.gridy = 3;
+        gbc.insets = new Insets(10, 10, 10, 10);
         add(btnSingle, gbc);
 
         // Botón para modo multijugador
         JButton btnPvP = createFlatButton("PLAYER VS PLAYER (PvP)");
         btnPvP.addActionListener(e -> {
+            game.selectLevel(levelCombo.getSelectedIndex());
             game.setGameMode("PvP");
             // Transición a Selección de Personaje (PvP = true)
             frame.setContentPane(new CharacterSelectionPanel(frame, gamePanel, game, true));
             frame.revalidate();
         });
-        gbc.gridy = 2;
+        btnPvP.setEnabled(levelNames.length > 0);
+        gbc.gridy = 4;
         add(btnPvP, gbc);
         
         // Botón para salir del juego
         JButton btnExit = createFlatButton("SALIR");
         btnExit.addActionListener(e -> System.exit(0));
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         add(btnExit, gbc);
     }
 

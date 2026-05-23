@@ -11,7 +11,7 @@ import javax.imageio.ImageIO;
 /**
  * Gestor de baldosas visuales basado en el diseño Data-Driven.
  * @author Yeray Guacheta
- * @version 1.0
+ * @version 1.1
  */
 public class TileManager {
     private Tile[] tiles;
@@ -20,6 +20,7 @@ public class TileManager {
     private static String pathFloorL = "res/lightFloor.png";
     private static String pathFloorD = "res/darkFloor.png";
     private static String pathSafe = "res/safeZone.png";
+    private static String pathCheckpoint = "res/checkpointZone.png";
 
     /**
      * Constructor de la clase. 
@@ -46,6 +47,8 @@ public class TileManager {
             tiles[3] = new Tile(ImageIO.read(new File(pathSafe)));
             //Zona Segura
             tiles[4] = new Tile(ImageIO.read(new File(pathSafe)));
+            //Zona Segura Intermedia
+            tiles[5] = new Tile(ImageIO.read(new File(pathCheckpoint)));
         } catch (Exception e) {
             System.out.println("Error cargando imágenes de las baldosas: " + e.getMessage());
         }

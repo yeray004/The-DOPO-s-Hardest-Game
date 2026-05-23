@@ -6,7 +6,7 @@ import java.awt.*;
 
 /**Panel intermedio para la selección de personajes antes de iniciar el nivel.
  * @author Yeray Guacheta
- * @version 1.0*/
+ * @version 1.1*/
 public class CharacterSelectionPanel extends JPanel {
 
     /**Construye la interfaz de selección de skins.
@@ -26,6 +26,7 @@ public class CharacterSelectionPanel extends JPanel {
         add(lblTitle, gbc);
 
         String[] skins = {"Blinky", "Inky", "Clyde"};
+        String[] borders = {"Black", "White", "Yellow", "Orange", "Cyan", "Magenta"};
         
         // Selector Jugador 1
         gbc.gridy = 1;
@@ -34,14 +35,28 @@ public class CharacterSelectionPanel extends JPanel {
         gbc.gridy = 2;
         add(comboP1, gbc);
 
+        // Selector de borde Jugador 1
+        gbc.gridy = 3;
+        add(new JLabel("Borde Jugador 1:"), gbc);
+        JComboBox<String> borderP1 = new JComboBox<>(borders);
+        gbc.gridy = 4;
+        add(borderP1, gbc);
+
         // Selector Jugador 2 (Oculto si es SinglePlayer)
         JComboBox<String> comboP2 = new JComboBox<>(skins);
+        JComboBox<String> borderP2 = new JComboBox<>(borders);
         if (isPvP) {
-            gbc.gridy = 3;
+            gbc.gridy = 5;
             add(new JLabel("Skin Jugador 2 (WASD):"), gbc);
-            gbc.gridy = 4;
+            gbc.gridy = 6;
             comboP2.setSelectedIndex(1); // Por defecto elige otro diferente
             add(comboP2, gbc);
+
+            gbc.gridy = 7;
+            add(new JLabel("Borde Jugador 2:"), gbc);
+            gbc.gridy = 8;
+            borderP2.setSelectedIndex(1); // Usa un borde diferente por defecto
+            add(borderP2, gbc);
         }
 
         // Botón Jugar
@@ -53,7 +68,9 @@ public class CharacterSelectionPanel extends JPanel {
         btnPlay.setFocusPainted(false);
         btnPlay.addActionListener(e -> {
             String skin2 = isPvP ? (String) comboP2.getSelectedItem() : null;
+            String selectedBorderP2 = isPvP ? (String) borderP2.getSelectedItem() : null;
             game.setInitialSkins((String) comboP1.getSelectedItem(), skin2);
+            game.setPlayerBorders((String) borderP1.getSelectedItem(), selectedBorderP2);
             
             frame.setContentPane(gamePanel);
             frame.revalidate();
@@ -62,11 +79,12 @@ public class CharacterSelectionPanel extends JPanel {
             
             // Reanuda el hilo del juego usando el nuevo método
             GamePanel board = (GamePanel) gamePanel.getComponent(1);
+            board.clearMovementState();
             board.resumeGame();
             board.requestFocusInWindow();
         });
         
-        gbc.gridy = 5;
+        gbc.gridy = isPvP ? 9 : 5;
         gbc.insets = new Insets(30, 10, 10, 10);
         add(btnPlay, gbc);
     }

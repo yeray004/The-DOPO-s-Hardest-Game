@@ -5,17 +5,19 @@ import java.awt.geom.Ellipse2D;
 
 /**Representa una moneda que puede otorgar puntos o cambiar el estado (Skin) del jugador.
  * @author Yeray Guacheta
- * @version 2.0*/
+ * @version 2.2*/
 public class Coin extends Element implements Collidable {
     private boolean isCollected;
     private final int BASE_HITBOX = 25;
+    private String color;
 
     /**Constructor para una moneda.
      * @param x Posición en el eje X.
      * @param y Posición en el eje Y.
      * @param color Color/Tipo de la moneda (Yellow, Blue, Green).*/
     public Coin(int x, int y, String color) {
-        super(x, y, color);
+        super(x, y);
+        this.color = color;
         this.isCollected = false;
     }
      
@@ -31,6 +33,9 @@ public class Coin extends Element implements Collidable {
     public boolean isVisible() { 
         return !isCollected; 
     }
+    
+    /** Establece si una moneda ha sico tomada. */
+    public void setCollected(boolean collected) { this.isCollected = collected; }
 
     /**Verifica si la moneda ya fue recogida por un jugador.
      * @return true si fue recogida, false si sigue activa.*/
@@ -41,6 +46,29 @@ public class Coin extends Element implements Collidable {
     /**Marca la moneda como recogida y la oculta del tablero.*/
     public void collect() {
         isCollected = true;
+    }
+
+    /**
+     * Recolecta la moneda y aplica su efecto especifico al jugador.
+     * Este metodo permite que las monedas especiales trabajen de forma polimorfica.
+     * @param player Jugador que recoge la moneda.
+     */
+    public void collect(Player player) {
+        if (isCollected) return;
+        collect();
+        if (player != null) {
+            player.collectCoin();
+            applyEffect(player);
+        }
+    }
+
+    /**
+     * Aplica el efecto propio de la moneda sobre el jugador.
+     * La moneda amarilla normal no cambia el estado del jugador.
+     * @param player Jugador afectado por la moneda.
+     */
+    protected void applyEffect(Player player) {
+        // La moneda normal solo suma al contador.
     }
 
     /**Verifica la colisión geométrica si la moneda sigue activa.
@@ -65,6 +93,10 @@ public class Coin extends Element implements Collidable {
         int margin = getMargin();
         return new Ellipse2D.Double(x + margin, y + margin, BASE_HITBOX, BASE_HITBOX);
     }
+
+    /**Engrega el color de la moneda.
+     * @return Color o tipo visual de la moneda.*/
+    public String getColor() { return color; }
 
     /**Obtiene el identificador visual para el renderizado.
      * @return String con el color/tipo de moneda.*/

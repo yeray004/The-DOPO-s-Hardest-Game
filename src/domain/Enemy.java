@@ -6,9 +6,9 @@ import java.util.List;
 
 /**Representa un enemigo dentro del juego manejado por una estrategia de movimiento.
  * @author Yeray Guacheta
- * @version 2.0
+ * @version 2.3
  */
-public class Enemy extends Element implements Collidable {
+public class Enemy extends Element implements Collidable, MovableElement {
     protected List<Point> movement;
     protected int speed;
     private final int BASE_HITBOX = 25;
@@ -16,24 +16,30 @@ public class Enemy extends Element implements Collidable {
     protected int dy = 1;
     protected int startX, startY;
     private EnemyStrategy strategy;
+    private boolean destroyed;
 
     /**Constructor para un enemigo basado en estrategias.
      * @param x Posición inicial X.
      * @param y Posición inicial Y.
-     * @param color Color base.
      * @param speed Velocidad de desplazamiento.
      * @param movement Lista de puntos de patrulla.
      * @param dx Dirección inicial X.
      * @param dy Dirección inicial Y.
-     * @param strategy Estrategia de movimiento.*/
-    public Enemy(int x, int y, String color, int speed, List<Point> movement, int dx, int dy, EnemyStrategy strategy) {
-        super(x, y, color);
+     * @param strategy Estrategia de movimiento.
+     * @throws DOPOsHardestGameException si la estrategia recibida es nula.*/
+    public Enemy(int x, int y, int speed, List<Point> movement, int dx, int dy, EnemyStrategy strategy)
+            throws DOPOsHardestGameException {
+        super(x, y);
         this.speed = speed;
         this.movement = movement;
         this.dx = dx;
         this.dy = dy;
         this.startX = x;
         this.startY = y;
+        this.destroyed = false;
+        if (strategy == null) {
+            throw new DOPOsHardestGameException(DOPOsHardestGameException.NULL_ENEMY_STRATEGY);
+        }
         this.strategy = strategy;
     }
 
@@ -42,13 +48,72 @@ public class Enemy extends Element implements Collidable {
     public void reset() {
         x = startX;
         y = startY;
+        destroyed = false;
+    }
+
+    /**Indica si el enemigo debe dibujarse y actualizarse.
+     * @return true si no fue destruido por un elemento especial.*/
+    @Override
+    public boolean isVisible() {
+        return !destroyed;
+    }
+
+    /**Marca el enemigo como destruido por un elemento especial.*/
+    public void destroy() {
+        destroyed = true;
+    }
+
+    /**Obtiene la velocidad actual del enemigo.
+     * @return Velocidad en pixeles por actualizacion.*/
+    @Override
+    public int getSpeed() {
+        return speed;
+    }
+
+    /**Obtiene la direccion horizontal actual.
+     * @return Direccion en X.*/
+    @Override
+    public int getDx() {
+        return dx;
+    }
+
+    /**Obtiene la direccion vertical actual.
+     * @return Direccion en Y.*/
+    @Override
+    public int getDy() {
+        return dy;
+    }
+
+    /**Cambia la direccion actual del enemigo.
+     * @param dx Nueva direccion horizontal.
+     * @param dy Nueva direccion vertical.*/
+    @Override
+    public void setDirection(int dx, int dy) {
+        this.dx = dx;
+        this.dy = dy;
+    }
+
+    /**Obtiene la ruta de patrulla configurada para el enemigo.
+     * @return Lista de puntos o null si no usa patrulla.*/
+    @Override
+    public List<Point> getMovementRoute() {
+        return movement;
     }
 
     /**Valida si el próximo movimiento interseca con un muro.
      * @param w Muro a evaluar.
      * @return true si colisionará, false en caso contrario.*/
     public boolean willCollideWith(Wall w) {
-        return getNextHitbox().intersects(w.getHitbox().getBounds2D());
+        return willCollideWith((Collidable) w);
+    }
+
+    /**
+     * Valida si el proximo movimiento interseca con cualquier objeto colisionable.
+     * @param collidable Objeto a evaluar como bloqueo.
+     * @return true si el movimiento siguiente genera colision.
+     */
+    public boolean willCollideWith(Collidable collidable) {
+        return getNextHitbox().intersects(collidable.getHitbox().getBounds2D());
     }
 
     /**Invierte la dirección de movimiento actual del enemigo.*/
@@ -63,12 +128,100 @@ public class Enemy extends Element implements Collidable {
         strategy.updatePosition(this, target);
     }
 
+    /**
+     * Actualiza este enemigo como un elemento general del nivel.
+     * El movimiento sigue delegado a la estrategia y las colisiones se reportan al nivel.
+     * @param level Nivel que contiene al enemigo y sus objetos de referencia.
+     * @return Resultado de la actualizacion para que el nivel decida si debe reiniciar.
+     */
+    @Override
+    public ElementUpdateResult updateElement(Level level) {
+        if (level == null || destroyed) {
+            return ElementUpdateResult.NONE;
+        }
+
+        int previousX = x;
+        int previousY = y;
+
+        if (willCollideWithBlockedZone(level)) {
+            reverseDirection();
+        } else {
+            Player target = level.getNearestPlayerTo(getX(), getY());
+            updatePosition(target);
+        }
+
+        // Evita que estrategias de persecucion entren a paredes o zonas seguras despues de moverse.
+        if (isInsideBlockedZone(level)) {
+            x = previousX;
+            y = previousY;
+            reverseDirection();
+        }
+
+        level.handleEnemySpecialElementInteractions(this);
+        if (destroyed) {
+            return ElementUpdateResult.NONE;
+        }
+
+        boolean anyPlayerDied = false;
+
+        // Evalua el impacto con cada jugador activo del nivel
+        for (Player p : level.getPlayers()) {
+            if (checkCollision(p) && p.hitByEnemy()) {
+                level.registerDeath();
+                anyPlayerDied = true;
+            }
+        }
+
+        if (anyPlayerDied) {
+            return ElementUpdateResult.PLAYER_DIED;
+        }
+        return ElementUpdateResult.NONE;
+    }
+
+    /**
+     * Valida si el siguiente paso toca una pared o cualquier zona segura.
+     * @param level Nivel que contiene los bloqueos.
+     * @return true si debe evitar el movimiento.
+     */
+    private boolean willCollideWithBlockedZone(Level level) {
+        for (Wall w : level.getWalls()) {
+            if (willCollideWith(w)) {
+                return true;
+            }
+        }
+        for (SafeZone safeZone : level.getSafeZones()) {
+            if (willCollideWith(safeZone)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si el enemigo quedo dentro de una pared o zona segura luego de moverse.
+     * @param level Nivel que contiene los bloqueos.
+     * @return true si la posicion actual no es valida.
+     */
+    private boolean isInsideBlockedZone(Level level) {
+        for (Wall w : level.getWalls()) {
+            if (checkCollision(w)) {
+                return true;
+            }
+        }
+        for (SafeZone safeZone : level.getSafeZones()) {
+            if (checkCollision(safeZone)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**Verifica la colisión actual con otro objeto colisionable.
      * @param other Objeto con el cual evaluar.
      * @return true si hay colisión, false en caso contrario.*/
     @Override
     public boolean checkCollision(Collidable other) {
-        return getHitbox().intersects(other.getHitbox().getBounds2D());
+        return !destroyed && getHitbox().intersects(other.getHitbox().getBounds2D());
     }
 
     /**Calcula el tamaño actual del hitbox según la estrategia.

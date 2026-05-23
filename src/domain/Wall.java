@@ -5,7 +5,7 @@ import java.awt.*;
 /**
  * Representa una pared sólida estática que bloquea el paso de jugadores y enemigos.
  * @author Yeray Guacheta
- * @version 1.0
+ * @version 1.1
  */
 public class Wall extends Element implements Collidable {
 
@@ -14,8 +14,8 @@ public class Wall extends Element implements Collidable {
      * @param x Posición en el eje X.
      * @param y Posición en el eje Y.
      */
-    public Wall(int x, int y, String color) {
-        super(x, y, color); 
+    public Wall(int x, int y) {
+        super(x, y); 
     }
     public void reset() {};
     
