@@ -31,4 +31,12 @@ public class Wall extends Element implements Collidable {
     
     @Override
     public String getSpriteType() { return "Wall"; }
+    
+    /**Entrega los datos visuales de la pared.
+     * @return Datos de renderizado de la pared.*/
+    @Override
+    public RenderData getRenderData() {
+        Rectangle bounds = getHitbox().getBounds();
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, getSpriteType());
+    }
 }

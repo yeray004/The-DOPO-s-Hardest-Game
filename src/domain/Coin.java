@@ -104,4 +104,14 @@ public class Coin extends Element implements Collidable {
     public String getSpriteType() {
         return color; // Retorna "Yellow", "Blue" o "Green"
     }
+    
+    /**Entrega los datos visuales de la moneda si se encuentra activa.
+     * @return Datos de renderizado de la moneda o null si ya fue recogida.*/
+    @Override
+    public RenderData getRenderData() {
+        if (!isVisible()) return null;
+
+        Rectangle bounds = getHitbox().getBounds();
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, getSpriteType());
+    }
 }

@@ -53,4 +53,8 @@ public abstract class Element{
     /**Entrega el tipo de elemento.
      * @return Tipo de identidad*/
     public abstract String getSpriteType();
+    
+    /**Entrega la informacion necesaria para dibujar el elemento en pantalla.
+     * @return Datos de renderizado del elemento.*/
+    public abstract RenderData getRenderData();
 }

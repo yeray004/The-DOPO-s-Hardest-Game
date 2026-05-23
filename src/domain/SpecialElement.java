@@ -126,4 +126,14 @@ public abstract class SpecialElement extends Element implements Collidable {
                 currentHitbox - padding * 2,
                 currentHitbox - padding * 2);
     }
+    
+    /**Entrega los datos visuales del elemento especial si se encuentra activo.
+     * @return Datos de renderizado del elemento especial o null si no esta activo.*/
+    @Override
+    public RenderData getRenderData() {
+        if (!isVisible()) return null;
+
+        Rectangle bounds = getHitbox().getBounds();
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, getSpriteType());
+    }
 }

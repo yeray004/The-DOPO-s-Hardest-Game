@@ -311,25 +311,17 @@ public class DOPOsHardestGame {
         List<RenderData> data = new ArrayList<>();
         Level current = getCurrentLevel();
         if (current == null) return data;
-        for (Element e : current.getAllElements()) {
-            if (e.isVisible() && e instanceof Collidable) {
-                if (e instanceof Player) {
-                    Player player = (Player) e;
-                    // Se dibuja el sprite completo, no solo la caja interna de colisión.
-                    Rectangle bounds = new Rectangle(player.getX() + player.getMargin(),
-                            player.getY() + player.getMargin(),
-                            player.getCurrentHitboxSize(),
-                            player.getCurrentHitboxSize());
-                    data.add(new RenderData(bounds.x, bounds.y, bounds.width, bounds.height,
-                            e.getSpriteType(), player.getBorderColorName()));
-                } else {
-                    // Se extrae la "caja" exacta que ocupa el elemento con su margen
-                    Rectangle bounds = ((Collidable) e).getHitbox().getBounds();
-                    data.add(new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, e.getSpriteType()));
+
+        for (Element element : current.getAllElements()) {
+            if (element.isVisible()) {
+                RenderData renderData = element.getRenderData();
+                if (renderData != null) {
+                    data.add(renderData);
                 }
             }
         }
         return data;
+        
     }
     
     /**

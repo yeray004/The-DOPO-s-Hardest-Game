@@ -14,4 +14,4 @@ public class BlinkyState implements PlayerState {
     public void handleDamage(Player player) {
         player.die(); // Blinky muere al primer toque
     }
-}
+} 

@@ -1,0 +1,240 @@
+THE DOPO HARDEST GAME - GUIDE FOR LEVEL .TXT FILES
+====================================================
+
+This file explains how to create the .txt files used by the game to build maps,
+place players, coins, enemies, special elements, and define the time limit.
+
+IMPORTANT RULES
+---------------
+- All positions used after the map are written in grid coordinates, not pixels.
+- The system converts each grid coordinate to pixels using TILE_SIZE = 40.
+- The first coordinate is X, the second coordinate is Y.
+- X represents the column.
+- Y represents the row.
+- Recommended names are the ones used in the examples below.
+
+GENERAL STRUCTURE
+-----------------
+A level file should follow this order:
+
+1. Map dimensions.
+2. Map matrix.
+3. Time limit.
+4. Optional entities: coins, enemies, special elements, and players if needed.
+
+Example structure:
+
+<width> <height>
+<row 0>
+<row 1>
+<row 2>
+...
+<row height - 1>
+TIME <seconds>
+COIN <x> <y> <type>
+ENEMY <strategy> <x> <y> <speed> [extra data]
+SPECIAL <type> <x> <y>
+
+MAP DIMENSIONS
+--------------
+The first line defines the size of the map:
+
+<width> <height>
+
+Example:
+
+10 6
+
+This means the map has 10 columns and 6 rows.
+
+MAP MATRIX
+----------
+After the dimensions, write exactly <height> rows.
+Each row must contain exactly <width> numbers.
+
+Tile values:
+
+0 = Wall
+1 = Light floor
+2 = Dark floor
+3 = Initial safe zone
+4 = Final safe zone
+5 = Intermediate safe zone / checkpoint
+
+Example:
+
+10 6
+0 0 0 0 0 0 0 0 0 0
+3 1 1 1 1 1 1 1 1 4
+3 1 0 0 1 1 0 0 1 4
+3 1 1 1 1 1 1 1 1 4
+0 0 0 0 5 5 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+
+TIME LIMIT
+----------
+Use TIME or TIMER followed by the number of seconds.
+
+Recommended format:
+
+TIME 60
+
+Example:
+
+TIME 90
+
+COINS
+-----
+Coins are written with this format:
+
+COIN <x> <y> <type>
+
+Recommended coin types:
+
+Yellow = Normal coin
+Blinky = Skin coin that changes the player to Blinky
+Inky = Skin coin that changes the player to Inky
+Clyde = Skin coin that changes the player to Clyde
+
+Examples:
+
+COIN 4 1 Yellow
+COIN 5 1 Inky
+COIN 6 3 Clyde
+COIN 7 3 Blinky
+
+Behavior:
+- All coins must be collected to complete the level.
+- In PvP, when any player collects a coin, the coin disappears from the board.
+- Only the player who collected the coin increases their own score.
+
+ENEMIES
+-------
+Enemies are written with this format:
+
+ENEMY <strategy> <x> <y> <speed> [extra data]
+
+Available strategies:
+
+LINEAR = Moves in a straight line and bounces.
+PATROL = Follows a fixed route.
+SEARCH = Moves directly toward the nearest player.
+AMBUSH = Moves aggressively when the player is within its vision range.
+
+LINEAR ENEMY
+------------
+Format:
+
+ENEMY LINEAR <x> <y> <speed> <dx> <dy>
+
+dx and dy define the direction:
+- dx = 1, dy = 0  -> moves right
+- dx = -1, dy = 0 -> moves left
+- dx = 0, dy = 1  -> moves down
+- dx = 0, dy = -1 -> moves up
+
+Examples:
+
+ENEMY LINEAR 4 2 2 1 0
+ENEMY LINEAR 6 3 2 0 1
+
+PATROL ENEMY
+------------
+Format:
+
+ENEMY PATROL <x> <y> <speed> <route>
+
+The route uses this format:
+
+x1,y1;x2,y2;x3,y3
+
+Example:
+
+ENEMY PATROL 3 2 2 3,2;6,2;6,3;3,3
+
+SEARCH ENEMY
+------------
+Format:
+
+ENEMY SEARCH <x> <y> <speed>
+
+Example:
+
+ENEMY SEARCH 5 2 1
+
+AMBUSH ENEMY
+------------
+Format:
+
+ENEMY AMBUSH <x> <y> <speed>
+
+Example:
+
+ENEMY AMBUSH 7 3 1
+
+SPECIAL ELEMENTS
+----------------
+Special elements are written with this format:
+
+SPECIAL <type> <x> <y>
+
+Available special elements:
+
+LifeSource = Gives one extra life to the player and disappears after being used.
+Bomb = Damages the player like an enemy collision and disappears only when it applies damage.
+
+Examples:
+
+SPECIAL LifeSource 2 3
+SPECIAL Bomb 8 2
+
+PLAYERS
+-------
+In the current project flow, players are usually prepared by the facade depending on
+the selected game mode.
+
+Recommended:
+- Use tile 3 for the initial safe zone.
+- Use tile 4 for the final safe zone.
+- In PvP, player 1 starts from the initial safe zone and player 2 starts from the final safe zone.
+
+Only use PLAYER lines if your current LevelLoader still supports manual player placement.
+
+Optional format:
+
+PLAYER <x> <y>
+
+Example:
+
+PLAYER 1 1
+
+COMPLETE LEVEL EXAMPLE
+----------------------
+This is a complete valid example:
+
+10 6
+0 0 0 0 0 0 0 0 0 0
+3 1 1 1 1 1 1 1 1 4
+3 1 0 0 1 1 0 0 1 4
+3 1 1 1 1 1 1 1 1 4
+0 0 0 0 5 5 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+TIME 75
+COIN 4 1 Yellow
+COIN 5 1 Inky
+COIN 6 3 Clyde
+ENEMY LINEAR 4 2 2 1 0
+ENEMY PATROL 3 3 2 3,3;6,3;6,1;3,1
+SPECIAL LifeSource 2 3
+SPECIAL Bomb 8 2
+
+COMMON ERRORS TO AVOID
+----------------------
+- Do not write pixel positions. Use grid coordinates.
+- Do not write fewer or more rows than the height value.
+- Do not write fewer or more columns than the width value.
+- Do not place enemies inside safe zones.
+- Do not place players, enemies, coins, or special elements inside walls.
+- Do not use old enemy strategy names such as BASIC, ORANGE, PINK, or RED.
+- Prefer LINEAR, PATROL, SEARCH, and AMBUSH for enemy strategies.
+- Make sure the level has at least one initial safe zone and one final safe zone.

@@ -265,4 +265,12 @@ public class Enemy extends Element implements Collidable, MovableElement {
     public String getSpriteType() {
         return strategy.getSpriteType();
     }
+    
+    /**Entrega los datos visuales del enemigo a partir de su hitbox actual.
+     * @return Datos de renderizado del enemigo.*/
+    @Override
+    public RenderData getRenderData() {
+        Rectangle bounds = getHitbox().getBounds();
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, getSpriteType());
+    }
 }

@@ -78,4 +78,12 @@ public class SafeZone extends Element implements Collidable {
     
     @Override
     public String getSpriteType() { return isCheckpoint ? "CheckpointZone" : "SafeZone"; }
+    
+    /**Entrega los datos visuales de la zona segura.
+     * @return Datos de renderizado de la zona segura.*/
+    @Override
+    public RenderData getRenderData() {
+        Rectangle bounds = getHitbox().getBounds();
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height, getSpriteType());
+    }
 }

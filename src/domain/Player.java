@@ -259,4 +259,17 @@ public class Player extends Element implements Collidable {
     public String getSpriteType() { 
         return state.getSpriteType(); // El render ahora sabe exactamente qué imagen pedir
     }
+    
+    /**Entrega los datos visuales del jugador usando el tamaño completo del sprite.
+     * @return Datos de renderizado con el borde del jugador.*/
+    @Override
+    public RenderData getRenderData() {
+        Rectangle bounds = new Rectangle(getX() + getMargin(),
+                getY() + getMargin(),
+                getCurrentHitboxSize(),
+                getCurrentHitboxSize());
+
+        return new RenderData(bounds.x, bounds.y, bounds.width, bounds.height,
+                getSpriteType(), getBorderColorName());
+    }
 }

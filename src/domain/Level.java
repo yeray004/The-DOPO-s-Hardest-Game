@@ -132,7 +132,7 @@ public class Level {
     public boolean attemptPlayerMove(Player p, int dx, int dy) {
         clearLastDeathCount();
     	Rectangle nextHitbox = p.getNextHitbox(dx, dy);
-        boolean canMove = true;
+        boolean canMove = true; 
         
         for (Wall w : walls) {
             if (nextHitbox.intersects(w.getHitbox().getBounds2D())) {
