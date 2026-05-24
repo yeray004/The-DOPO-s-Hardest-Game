@@ -33,9 +33,9 @@ public class GameAcceptanceTestEI {
             writer.println("0 0 0 0 0 2 1 2 1 2 1 2 1 2 1 2 1 0 0 0 0 0");
             writer.println("0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0");
             writer.println("0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0");
-            writer.println("PLAYER 2 4");
+            writer.println("TIME 60");
             writer.println("COIN 10 4 Yellow");
-            writer.println("ENEMY BASIC BasicEnemy 6 3 2 1 0");
+            writer.println("ENEMY LINEAR 8 2 1 1 0");
         }
     }
 
