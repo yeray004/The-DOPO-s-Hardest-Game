@@ -7,7 +7,7 @@
 El juego está inspirado en *The World's Hardest Game* y cumple los requerimientos principales definidos en el documento formal del proyecto, incluyendo carga de niveles desde archivos `.txt`, movimiento de jugadores, recolección de monedas, enemigos con comportamientos, elementos especiales, modo jugador y modo PvP.
 
 > Documento recomendado para revisar primero:  
-> `docs/Requerimientos_DOPOsHardestGame.pdf`
+> `/Requerimientos_DOPOsHardestGame.pdf`
 
 ---
 
